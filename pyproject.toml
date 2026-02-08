@@ -1,0 +1,110 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "burn_probs"
+version = "0.1.0"
+description = "Ex ante burn probability model for California parcels"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Burn Probability Model Team"}
+]
+keywords = ["wildfire", "fire", "probability", "california", "parcels", "monte-carlo"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "geopandas>=0.14.0",
+    "shapely>=2.0.0",
+    "rasterio>=1.3.0",
+    "xarray>=2023.1.0",
+    "rioxarray>=0.15.0",
+    "netCDF4>=1.6.0",
+    "pyproj>=3.6.0",
+    "scikit-learn>=1.3.0",
+    "rasterstats>=0.19.0",
+    "scipy>=1.11.0",
+    "requests>=2.31.0",
+    "pyyaml>=6.0",
+    "joblib>=1.3.0",
+]
+
+[project.optional-dependencies]
+ml = [
+    "xgboost>=2.0.0",
+    "lightgbm>=4.0.0",
+]
+viz = [
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+]
+all = [
+    "burn_probs[ml,viz,dev]",
+]
+
+[project.scripts]
+download-pilot = "scripts.download_pilot_data:main"
+train-ignition = "scripts.train_ignition_model:main"
+test-flammap = "scripts.test_flammap:main"
+run-monte-carlo = "scripts.run_monte_carlo:main"
+validate-results = "scripts.validate_results:main"
+
+[project.urls]
+Homepage = "https://github.com/example/burn_probs"
+Documentation = "https://github.com/example/burn_probs/wiki"
+Repository = "https://github.com/example/burn_probs"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "config*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.mypy_cache
+    | \.pytest_cache
+    | __pycache__
+    | data
+    | notebooks
+)/
+'''
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = ["tests", "notebooks"]
+
+[tool.flake8]
+max-line-length = 100
+exclude = [".git", "__pycache__", "data", "notebooks", ".eggs"]
+ignore = ["E501", "W503", "E203"]

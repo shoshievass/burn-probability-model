@@ -1,0 +1,395 @@
+# Rothermel Fuel Model Parameters
+# Based on Scott & Burgan (2005) and Anderson (1982)
+# Units: SI unless otherwise noted
+
+# 13 Anderson Fire Behavior Fuel Models
+anderson_13:
+  1:
+    name: "Short grass"
+    fuel_type: "grass"
+    load_1hr: 0.166  # kg/m2
+    load_10hr: 0.0
+    load_100hr: 0.0
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 11483  # 1/m (3500 1/ft)
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.305  # m (1.0 ft)
+    dead_fuel_moisture_ext: 0.12
+    heat_content: 18622  # kJ/kg (8000 BTU/lb)
+
+  2:
+    name: "Timber grass/understory"
+    fuel_type: "grass_understory"
+    load_1hr: 0.448
+    load_10hr: 0.224
+    load_100hr: 0.112
+    load_live_herb: 0.112
+    load_live_woody: 0.0
+    sav_1hr: 9843
+    sav_live_herb: 4921
+    sav_live_woody: 0
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  3:
+    name: "Tall grass"
+    fuel_type: "grass"
+    load_1hr: 0.675
+    load_10hr: 0.0
+    load_100hr: 0.0
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 4921
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.762
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+  4:
+    name: "Chaparral"
+    fuel_type: "brush"
+    load_1hr: 1.123
+    load_10hr: 0.898
+    load_100hr: 0.448
+    load_live_herb: 0.0
+    load_live_woody: 1.123
+    sav_1hr: 6562
+    sav_live_herb: 0
+    sav_live_woody: 4921
+    fuel_bed_depth: 1.829
+    dead_fuel_moisture_ext: 0.20
+    heat_content: 18622
+
+  5:
+    name: "Short brush"
+    fuel_type: "brush"
+    load_1hr: 0.224
+    load_10hr: 0.112
+    load_100hr: 0.0
+    load_live_herb: 0.0
+    load_live_woody: 0.336
+    sav_1hr: 6562
+    sav_live_herb: 0
+    sav_live_woody: 4921
+    fuel_bed_depth: 0.610
+    dead_fuel_moisture_ext: 0.20
+    heat_content: 18622
+
+  6:
+    name: "Dormant brush"
+    fuel_type: "brush"
+    load_1hr: 0.336
+    load_10hr: 0.560
+    load_100hr: 0.448
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 5741
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.762
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+  7:
+    name: "Southern rough"
+    fuel_type: "brush"
+    load_1hr: 0.252
+    load_10hr: 0.420
+    load_100hr: 0.336
+    load_live_herb: 0.0
+    load_live_woody: 0.084
+    sav_1hr: 5741
+    sav_live_herb: 0
+    sav_live_woody: 4921
+    fuel_bed_depth: 0.762
+    dead_fuel_moisture_ext: 0.40
+    heat_content: 18622
+
+  8:
+    name: "Closed timber litter"
+    fuel_type: "timber_litter"
+    load_1hr: 0.336
+    load_10hr: 0.224
+    load_100hr: 0.560
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 6562
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.061
+    dead_fuel_moisture_ext: 0.30
+    heat_content: 18622
+
+  9:
+    name: "Hardwood litter"
+    fuel_type: "timber_litter"
+    load_1hr: 0.652
+    load_10hr: 0.091
+    load_100hr: 0.034
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 8202
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.061
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+  10:
+    name: "Timber understory"
+    fuel_type: "timber_understory"
+    load_1hr: 0.675
+    load_10hr: 0.448
+    load_100hr: 1.123
+    load_live_herb: 0.0
+    load_live_woody: 0.448
+    sav_1hr: 6562
+    sav_live_herb: 0
+    sav_live_woody: 4921
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+  11:
+    name: "Light logging slash"
+    fuel_type: "slash"
+    load_1hr: 0.336
+    load_10hr: 1.011
+    load_100hr: 1.235
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 4921
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  12:
+    name: "Medium logging slash"
+    fuel_type: "slash"
+    load_1hr: 0.898
+    load_10hr: 3.144
+    load_100hr: 3.706
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 4921
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.701
+    dead_fuel_moisture_ext: 0.20
+    heat_content: 18622
+
+  13:
+    name: "Heavy logging slash"
+    fuel_type: "slash"
+    load_1hr: 1.571
+    load_10hr: 5.166
+    load_100hr: 6.290
+    load_live_herb: 0.0
+    load_live_woody: 0.0
+    sav_1hr: 4921
+    sav_live_herb: 0
+    sav_live_woody: 0
+    fuel_bed_depth: 0.914
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+# Non-burnable fuel models
+non_burnable:
+  91:
+    name: "Urban/Developed"
+    burnable: false
+  92:
+    name: "Snow/Ice"
+    burnable: false
+  93:
+    name: "Agricultural"
+    burnable: false
+  98:
+    name: "Water"
+    burnable: false
+  99:
+    name: "Barren"
+    burnable: false
+
+# 40 Scott & Burgan Fuel Models (selected key models)
+scott_burgan_40:
+  # Grass models (GR)
+  GR1:
+    name: "Short, sparse dry climate grass"
+    fuel_type: "grass"
+    load_1hr: 0.022
+    load_live_herb: 0.067
+    sav_1hr: 7218
+    sav_live_herb: 6562
+    fuel_bed_depth: 0.122
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  GR2:
+    name: "Low load, dry climate grass"
+    fuel_type: "grass"
+    load_1hr: 0.022
+    load_live_herb: 0.224
+    sav_1hr: 6562
+    sav_live_herb: 5906
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  # Grass-Shrub models (GS)
+  GS1:
+    name: "Low load, dry climate grass-shrub"
+    fuel_type: "grass_shrub"
+    load_1hr: 0.045
+    load_live_herb: 0.112
+    load_live_woody: 0.145
+    sav_1hr: 6562
+    sav_live_herb: 5906
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.274
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  GS2:
+    name: "Moderate load, dry climate grass-shrub"
+    fuel_type: "grass_shrub"
+    load_1hr: 0.112
+    load_live_herb: 0.135
+    load_live_woody: 0.269
+    sav_1hr: 6562
+    sav_live_herb: 5906
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.457
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  # Shrub models (SH)
+  SH1:
+    name: "Low load, dry climate shrub"
+    fuel_type: "shrub"
+    load_1hr: 0.056
+    load_live_woody: 0.291
+    sav_1hr: 6562
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  SH2:
+    name: "Moderate load, dry climate shrub"
+    fuel_type: "shrub"
+    load_1hr: 0.291
+    load_10hr: 0.224
+    load_live_woody: 0.179
+    sav_1hr: 6562
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  SH5:
+    name: "High load, dry climate shrub"
+    fuel_type: "shrub"
+    load_1hr: 0.806
+    load_10hr: 0.560
+    load_live_woody: 0.672
+    sav_1hr: 2461
+    sav_live_woody: 5577
+    fuel_bed_depth: 1.829
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  SH7:
+    name: "Very high load, dry climate shrub"
+    fuel_type: "shrub"
+    load_1hr: 0.806
+    load_10hr: 1.235
+    load_100hr: 0.179
+    load_live_woody: 1.459
+    sav_1hr: 2461
+    sav_live_woody: 5577
+    fuel_bed_depth: 1.829
+    dead_fuel_moisture_ext: 0.15
+    heat_content: 18622
+
+  # Timber-Understory models (TU)
+  TU1:
+    name: "Low load, dry climate timber-grass-shrub"
+    fuel_type: "timber_understory"
+    load_1hr: 0.045
+    load_10hr: 0.202
+    load_100hr: 0.336
+    load_live_herb: 0.045
+    load_live_woody: 0.202
+    sav_1hr: 6562
+    sav_live_herb: 5906
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.183
+    dead_fuel_moisture_ext: 0.20
+    heat_content: 18622
+
+  TU5:
+    name: "Very high load, dry climate timber-shrub"
+    fuel_type: "timber_understory"
+    load_1hr: 0.898
+    load_10hr: 0.336
+    load_100hr: 0.0
+    load_live_woody: 0.898
+    sav_1hr: 5249
+    sav_live_woody: 5577
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+  # Timber Litter models (TL)
+  TL1:
+    name: "Low load, compact conifer litter"
+    fuel_type: "timber_litter"
+    load_1hr: 0.224
+    load_10hr: 0.493
+    load_100hr: 0.806
+    sav_1hr: 6562
+    fuel_bed_depth: 0.061
+    dead_fuel_moisture_ext: 0.30
+    heat_content: 18622
+
+  TL3:
+    name: "Moderate load, conifer litter"
+    fuel_type: "timber_litter"
+    load_1hr: 0.112
+    load_10hr: 0.493
+    load_100hr: 0.627
+    sav_1hr: 6562
+    fuel_bed_depth: 0.091
+    dead_fuel_moisture_ext: 0.20
+    heat_content: 18622
+
+  # Slash-Blowdown models (SB)
+  SB1:
+    name: "Low load activity fuel"
+    fuel_type: "slash"
+    load_1hr: 0.336
+    load_10hr: 0.672
+    load_100hr: 2.469
+    sav_1hr: 6562
+    fuel_bed_depth: 0.305
+    dead_fuel_moisture_ext: 0.25
+    heat_content: 18622
+
+# Crown fire parameters
+crown_fire:
+  critical_mass_flow_rate: 3.0  # kg/m2/min - threshold for active crown fire
+  foliar_moisture_content: 1.0  # 100% for live foliage
+
+# Conversion factors
+conversion:
+  lb_per_ft2_to_kg_per_m2: 4.88243
+  ft_to_m: 0.3048
+  btu_per_lb_to_kj_per_kg: 2.326
+  per_ft_to_per_m: 3.28084

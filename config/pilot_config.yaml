@@ -1,0 +1,106 @@
+# Desktop pilot configuration for Sonoma County
+# Use this for development and testing before HPC scaling
+
+pilot:
+  county: "Sonoma"
+  fips_code: "06097"  # Sonoma County FIPS
+
+  # Geographic bounds (WGS84)
+  bounds:
+    minx: -123.5
+    miny: 38.1
+    maxx: -122.3
+    maxy: 38.9
+
+  # California Albers bounds (approximate)
+  bounds_albers:
+    minx: -280000
+    miny: 0
+    maxx: -180000
+    maxy: 100000
+
+years:
+  # Training data for ignition model
+  training_start: 2010
+  training_end: 2017
+
+  # Prediction/validation years
+  prediction_start: 2018
+  prediction_end: 2022
+
+  # Full analysis period (for statewide)
+  analysis_start: 2015
+  analysis_end: 2025
+
+resolution:
+  # Grid resolution for modeling
+  grid_m: 270  # meters, matches FSim
+  landfire_m: 30  # native LANDFIRE
+  dem_m: 10  # native 3DEP
+
+monte_carlo:
+  # Desktop iterations
+  n_iterations: 1000  # Full pilot
+  n_iterations_quick: 100  # Quick test
+
+  # Processing
+  n_cores: 28  # Desktop machine
+  chunk_size: 50
+
+  # Weather sampling
+  sample_extreme_weather: true
+  extreme_weather_fraction: 0.15
+
+validation:
+  # Within-year holdout
+  holdout_fraction: 0.30
+  random_seed: 42
+
+  # Target metrics
+  ignition_auc_target: 0.85
+  ignition_recall_target: 0.70
+  burn_prob_auc_target: 0.80
+
+flammap:
+  # FlamMap simulation settings
+  simulation_duration_min: 480  # 8 hours
+  timestep_min: 30
+  spot_probability: 0.1
+  enable_crown_fire: true
+
+data_paths:
+  # Relative to project root
+  raw: "data/raw"
+  processed: "data/processed"
+  output: "data/output"
+
+  # Specific subdirectories
+  fire_history: "data/raw/fire_history"
+  weather: "data/raw/weather"
+  landfire: "data/raw/landfire"
+  terrain: "data/raw/terrain"
+  parcels: "data/raw/parcels"
+  infrastructure: "data/raw/infrastructure"
+
+notable_fires:
+  # Historical fires in Sonoma County for validation
+  sonoma:
+    - name: "Tubbs Fire"
+      year: 2017
+      acres: 36807
+      date: "2017-10-08"
+
+    - name: "Glass Fire"
+      year: 2020
+      acres: 67484
+      date: "2020-09-27"
+
+    - name: "Kincade Fire"
+      year: 2019
+      acres: 77758
+      date: "2019-10-23"
+
+    - name: "Nuns Fire"
+      year: 2017
+      acres: 54382
+      date: "2017-10-08"

@@ -1,0 +1,196 @@
+# Data sources configuration for California burn probability model
+
+fire_history:
+  # CAL FIRE Fire Perimeters (all fires)
+  fire_perimeters:
+    name: "California Fire Perimeters"
+    source: "CAL FIRE FRAP"
+    url: "https://gis.data.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all-1/about"
+    api_url: "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/California_Fire_Perimeters_all/FeatureServer/0"
+    format: "geojson"
+    crs: "EPSG:3310"
+    fields:
+      - YEAR_
+      - ALARM_DATE
+      - CONT_DATE
+      - GIS_ACRES
+      - CAUSE
+      - FIRE_NAME
+
+  # NIFC Fire Ignition Points
+  ignition_points:
+    name: "Wildland Fire Incident Locations"
+    source: "NIFC WFIGS"
+    url: "https://data-nifc.opendata.arcgis.com/datasets/nifc::wfigs-wildland-fire-locations-full-history/about"
+    api_url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0"
+    format: "geojson"
+    crs: "EPSG:4326"
+    state_filter: "CA"
+
+weather:
+  # GridMET - Historical weather for training
+  gridmet:
+    name: "GridMET Meteorological Data"
+    source: "University of Idaho"
+    base_url: "https://www.northwestknowledge.net/metdata/data/"
+    thredds_url: "http://thredds.northwestknowledge.net:8080/thredds/dodsC/agg_met_{var}_1979_CurrentYear_CONUS.nc"
+    resolution_m: 4000
+    crs: "EPSG:4326"
+    variables:
+      tmmx: "daily_maximum_temperature"
+      tmmn: "daily_minimum_temperature"
+      rmax: "daily_maximum_relative_humidity"
+      rmin: "daily_minimum_relative_humidity"
+      vs: "daily_mean_wind_speed"
+      pr: "daily_precipitation"
+      erc: "energy_release_component"
+      fm100: "100-hour_dead_fuel_moisture"
+      fm1000: "1000-hour_dead_fuel_moisture"
+      bi: "burning_index"
+
+  # RTMA - Real-time for fire spread (hourly)
+  rtma:
+    name: "Real-Time Mesoscale Analysis"
+    source: "NOAA/NCEP"
+    base_url: "https://nomads.ncep.noaa.gov/pub/data/nccf/com/rtma/prod/"
+    resolution_m: 2500
+    temporal: "hourly"
+    variables:
+      - TMP  # Temperature
+      - UGRD  # U-wind component
+      - VGRD  # V-wind component
+      - RH  # Relative humidity
+
+fuel_vegetation:
+  # LANDFIRE data
+  landfire:
+    name: "LANDFIRE"
+    source: "USGS/USFS"
+    base_url: "https://landfire.gov/version_download.php"
+    lfps_url: "https://lfps.usgs.gov/arcgis/rest/services/LandfireProductService/GPServer"
+    resolution_m: 30
+    crs: "EPSG:5070"  # Albers Equal Area
+
+    products:
+      fbfm13:
+        name: "13 Anderson Fire Behavior Fuel Models"
+        code: "FBFM13"
+        description: "13 standard fuel models"
+
+      fbfm40:
+        name: "40 Scott & Burgan Fire Behavior Fuel Models"
+        code: "FBFM40"
+        description: "40 Scott/Burgan fuel models"
+
+      cc:
+        name: "Canopy Cover"
+        code: "CC"
+        units: "percent"
+
+      ch:
+        name: "Canopy Height"
+        code: "CH"
+        units: "meters"
+
+      cbh:
+        name: "Canopy Base Height"
+        code: "CBH"
+        units: "meters"
+
+      cbd:
+        name: "Canopy Bulk Density"
+        code: "CBD"
+        units: "kg/m3"
+
+      asp:
+        name: "Aspect"
+        code: "ASP"
+        units: "degrees"
+
+      slp:
+        name: "Slope"
+        code: "SLP"
+        units: "degrees"
+
+      dem:
+        name: "Elevation"
+        code: "ELEV"
+        units: "meters"
+
+terrain:
+  # USGS 3DEP
+  dem:
+    name: "USGS 3D Elevation Program"
+    source: "USGS"
+    url: "https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/"
+    api_url: "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer"
+    resolution_m: 10
+    crs: "EPSG:4269"
+
+  # Derived products
+  derived:
+    slope:
+      units: "degrees"
+    aspect:
+      units: "degrees"
+    tpi:
+      name: "Topographic Position Index"
+      window_size: 500  # meters
+
+infrastructure:
+  # California roads
+  roads:
+    name: "California Roads"
+    source: "US Census TIGER"
+    url: "https://www2.census.gov/geo/tiger/TIGER2023/ROADS/"
+    format: "shapefile"
+
+  # Power lines
+  power_lines:
+    name: "Electric Power Transmission Lines"
+    source: "HIFLD"
+    url: "https://hifld-geoplatform.opendata.arcgis.com/datasets/electric-power-transmission-lines"
+    format: "geojson"
+
+parcels:
+  # Statewide parcel data
+  california:
+    name: "California Statewide Parcel Boundaries"
+    sources:
+      - name: "UCLA Geoportal"
+        url: "https://geodata.lib.berkeley.edu/"
+      - name: "ArcGIS Hub"
+        url: "https://hub.arcgis.com/datasets/california-parcels"
+    format: "geoparquet"
+    n_parcels_approx: 13000000
+
+  # County-specific sources (for pilot)
+  sonoma:
+    name: "Sonoma County Parcels"
+    url: "https://gis-sonoma.hub.arcgis.com/datasets/parcels"
+    format: "geojson"
+
+fire_hazard:
+  # Fire Hazard Severity Zones
+  fhsz:
+    name: "Fire Hazard Severity Zones"
+    source: "CAL FIRE"
+    url: "https://osfm.fire.ca.gov/divisions/community-wildfire-preparedness-and-mitigation/wildfire-preparedness/fire-hazard-severity-zones/"
+    api_url: "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/FHSZ/FeatureServer/0"
+    categories:
+      - Very High
+      - High
+      - Moderate
+
+wui:
+  # Wildland-Urban Interface
+  name: "Wildland-Urban Interface"
+  source: "SILVIS Lab, UW-Madison"
+  url: "http://silvis.forest.wisc.edu/data/wui-change/"
+  format: "shapefile"
+
+population:
+  name: "Population Density"
+  source: "US Census"
+  url: "https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html"
+  resolution: "block_group"

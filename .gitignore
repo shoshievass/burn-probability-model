@@ -1,0 +1,79 @@
+# Data directories (too large for git)
+data/raw/
+data/processed/
+data/output/
+
+# But keep directory structure
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/output/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cluster specific
+cluster/config.yaml  # Contains user-specific paths
+slurm-*.out
+*.slurm.out
+*.slurm.err
+
+# Model outputs (large files)
+*.tif
+*.parquet
+*.joblib
+*.pkl
+
+# But keep small example files
+!examples/*.tif
+!examples/*.parquet
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+data/raw_synthetic_backup/

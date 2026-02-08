@@ -1,0 +1,95 @@
+# Production configuration for statewide HPC runs
+
+production:
+  name: "California Statewide Burn Probability"
+  description: "Full production run for all California parcels"
+
+geographic:
+  # California bounds (WGS84)
+  bounds:
+    minx: -124.5
+    miny: 32.5
+    maxx: -114.0
+    maxy: 42.1
+
+  # California Albers (EPSG:3310)
+  crs: "EPSG:3310"
+
+  # Tiling for HPC
+  tile_size_km: 100
+  tile_buffer_km: 10
+  n_tiles_approx: 200
+
+years:
+  # Training data for ignition model
+  training_start: 2010
+  training_end: 2014
+
+  # Prediction years
+  prediction_start: 2015
+  prediction_end: 2025
+
+  # Weather history for sampling
+  weather_history_start: 2000
+
+resolution:
+  grid_m: 270  # matches FSim
+
+monte_carlo:
+  n_iterations: 10000
+  chunk_size: 100
+
+  # Weather sampling
+  sample_extreme_weather: true
+  extreme_weather_fraction: 0.15
+  santa_ana_months: [9, 10, 11, 12]  # Sep-Dec
+
+hpc:
+  scheduler: "slurm"  # or "pbs"
+  partition: "normal"
+  nodes_per_job: 1
+  cores_per_node: 32
+  memory_gb: 128
+  walltime_hours: 4
+
+  # Job array
+  max_concurrent_jobs: 50
+
+  # Resource estimates
+  estimated_node_hours: 400
+  estimated_storage_tb: 10
+
+validation:
+  holdout_fraction: 0.30
+  random_seed: 42
+
+  # Stratification
+  stratify_by_fire_size: true
+  size_classes:
+    - small: [0, 100]  # acres
+    - medium: [100, 1000]
+    - large: [1000, 10000]
+    - mega: [10000, null]
+
+output:
+  # Output products
+  formats:
+    - geoparquet
+    - csv
+    - geotiff
+
+  # Fields to include
+  parcel_fields:
+    - apn
+    - county
+    - geometry
+    - year
+    - burn_prob_mean
+    - burn_prob_max
+    - burn_prob_std
+    - burn_prob_p05
+    - burn_prob_p95
+    - dominant_fuel
+    - fhsz
+    - wui_class
+    - actually_burned  # for validation

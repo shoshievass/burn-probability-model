@@ -1,0 +1,125 @@
+# California Burn Probability Model - Cluster Configuration
+# Copy this file to config.yaml and edit for your cluster
+
+# ==============================================================================
+# SLURM Cluster Settings
+# ==============================================================================
+cluster:
+  name: "your_cluster_name"      # Cluster identifier (for logging)
+  partition: "normal"            # SLURM partition (e.g., normal, gpu, highmem)
+  account: "your_account"        # SLURM account/allocation
+  email: "you@university.edu"    # Email for job notifications
+  mail_type: "END,FAIL"          # When to send email (BEGIN, END, FAIL, ALL)
+
+# ==============================================================================
+# Storage Paths
+# ==============================================================================
+# Use absolute paths. $USER will be expanded.
+paths:
+  # Root project directory
+  project_root: "/scratch/users/$USER/burn_probs"
+
+  # Input data (downloaded)
+  data_raw: "/scratch/users/$USER/burn_probs/data/raw"
+
+  # Processed data (intermediate files)
+  data_processed: "/scratch/users/$USER/burn_probs/data/processed"
+
+  # Output data (results)
+  output: "/scratch/users/$USER/burn_probs/data/output"
+
+  # Log files
+  logs: "/scratch/users/$USER/burn_probs/logs"
+
+  # Temporary storage (fast scratch, if available)
+  temp: "/tmp/$USER/burn_probs"
+
+# ==============================================================================
+# Model Parameters
+# ==============================================================================
+model:
+  # Spatial resolution
+  resolution: 30                 # meters (30 = LANDFIRE native)
+
+  # Tiling parameters
+  tile_size: 100000              # meters (100 km × 100 km tiles)
+  buffer_size: 10000             # meters (10 km buffer for fire spread)
+
+  # Monte Carlo parameters
+  weather_samples: 100           # Number of weather scenarios per ignition
+  simulation_hours: 24           # Fire spread duration (hours)
+  timestep_minutes: 5            # Simulation timestep
+  extreme_weather_fraction: 0.15 # Fraction of extreme weather samples
+
+  # Study period
+  start_year: 2015
+  end_year: 2022
+
+  # Validation
+  holdout_fraction: 0.30         # Fraction of fires held out for validation
+  random_seed: 42                # For reproducibility
+
+# ==============================================================================
+# Resource Allocation
+# ==============================================================================
+resources:
+  # Per-job resources (for simulation jobs)
+  cpus_per_task: 16              # CPUs per tile job
+  memory_gb: 64                  # RAM per job (GB)
+  time_limit: "06:00:00"         # Wall time limit (HH:MM:SS)
+
+  # Download job (single job, light resources)
+  download:
+    cpus: 4
+    memory_gb: 16
+    time_limit: "04:00:00"
+
+  # Preprocessing job (single job, moderate resources)
+  preprocess:
+    cpus: 8
+    memory_gb: 64
+    time_limit: "02:00:00"
+
+  # Merge job (single job, high I/O)
+  merge:
+    cpus: 8
+    memory_gb: 128
+    time_limit: "04:00:00"
+
+  # Validation job (single job, moderate)
+  validate:
+    cpus: 4
+    memory_gb: 32
+    time_limit: "01:00:00"
+
+# ==============================================================================
+# Parallel Execution
+# ==============================================================================
+parallel:
+  # Maximum concurrent jobs (respects cluster policies)
+  max_concurrent_jobs: 56        # All tiles can run simultaneously
+
+  # Job array settings
+  array_throttle: 20             # Max simultaneous array tasks
+
+# ==============================================================================
+# Data Sources
+# ==============================================================================
+data_sources:
+  landfire:
+    base_url: "https://landfire.gov/bulk/downloadfile.php"
+    products:
+      - "FBFM40"      # Fuel model
+      - "CC"          # Canopy cover
+      - "CH"          # Canopy height
+      - "ELEV"        # Elevation
+      - "SLP"         # Slope
+      - "ASP"         # Aspect
+
+  fire_perimeters:
+    url: "https://gis.data.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all"
+    format: "parquet"
+
+  buildings:
+    source: "osm"     # OpenStreetMap via Overpass API
+    format: "parquet"
