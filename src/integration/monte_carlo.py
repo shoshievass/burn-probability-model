@@ -179,9 +179,14 @@ class MonteCarloEngine:
         # Initialize burn counts
         burn_counts = np.zeros((self.nrows, self.ncols), dtype=np.int32)
 
-        # Determine number of extreme weather iterations
-        n_extreme = int(n_iterations * self.config.extreme_weather_fraction)
-        n_normal = n_iterations - n_extreme
+        # Determine sampling mode
+        use_empirical = self.gridmet_ds is not None
+        if use_empirical:
+            logger.info("Weather sampling: EMPIRICAL (pure random from fire season days)")
+        else:
+            # Only use artificial extreme/normal split when no empirical data
+            n_extreme = int(n_iterations * self.config.extreme_weather_fraction)
+            logger.info(f"Weather sampling: DEFAULT (artificial {self.config.extreme_weather_fraction:.0%} extreme)")
 
         # Run iterations
         for i in range(n_iterations):
@@ -191,8 +196,13 @@ class MonteCarloEngine:
                     progress_callback(i / n_iterations)
 
             # Sample weather scenario
-            is_extreme = i < n_extreme
-            weather = self._sample_weather(extreme=is_extreme)
+            # With empirical data: pure random sampling (no artificial extreme forcing)
+            # Without empirical data: use artificial extreme/normal split
+            if use_empirical:
+                weather = self._sample_weather(extreme=False)  # Pure random from fire season
+            else:
+                is_extreme = i < n_extreme
+                weather = self._sample_weather(extreme=is_extreme)
 
             # Compute ignition probability
             ignition_prob = self._compute_ignition_probability(weather)
@@ -253,8 +263,14 @@ class MonteCarloEngine:
         # Initialize burn counts
         burn_counts = np.zeros((self.nrows, self.ncols), dtype=np.int32)
 
-        # Determine extreme weather fraction
-        n_extreme = int(n_weather_samples * self.config.extreme_weather_fraction)
+        # Determine sampling mode
+        use_empirical = self.gridmet_ds is not None
+        if use_empirical:
+            logger.info("Weather sampling: EMPIRICAL (pure random from fire season days)")
+        else:
+            # Only use artificial extreme/normal split when no empirical data
+            n_extreme = int(n_weather_samples * self.config.extreme_weather_fraction)
+            logger.info(f"Weather sampling: DEFAULT (artificial {self.config.extreme_weather_fraction:.0%} extreme)")
 
         from rasterio.transform import rowcol
 
@@ -278,8 +294,13 @@ class MonteCarloEngine:
 
             # Run multiple weather scenarios for this ignition
             for w in range(n_weather_samples):
-                is_extreme = w < n_extreme
-                weather = self._sample_weather(extreme=is_extreme)
+                # With empirical data: pure random sampling (no artificial extreme forcing)
+                # Without empirical data: use artificial extreme/normal split
+                if use_empirical:
+                    weather = self._sample_weather(extreme=False)  # Pure random from fire season
+                else:
+                    is_extreme = w < n_extreme
+                    weather = self._sample_weather(extreme=is_extreme)
 
                 # Simulate fire spread from this ignition (expects row, col indices)
                 burned = self._simulate_fire_spread((row, col), weather)
@@ -303,13 +324,30 @@ class MonteCarloEngine:
         )
 
     def _sample_weather(self, extreme: bool = False) -> Dict:
-        """Sample a weather scenario."""
+        """
+        Sample a weather scenario.
+
+        Parameters
+        ----------
+        extreme : bool
+            If True and no empirical data, use hardcoded extreme weather.
+            If empirical data is available, this flag is ignored - we sample
+            purely from the historical fire season distribution, so extreme
+            events occur at their natural historical frequency.
+
+        Returns
+        -------
+        dict
+            Weather parameters for fire spread simulation
+        """
         from src.spread.weather_streams import sample_weather_scenario
 
         if self.gridmet_ds is not None:
-            # Sample from historical data
-            lat = (self.bounds[1] + self.bounds[3]) / 2
-            # Convert from Albers to WGS84
+            # EMPIRICAL MODE: Sample random day from fire season
+            # Extreme events will occur at their natural historical frequency
+            # (no artificial forcing of extreme vs normal)
+
+            # Convert center of bounds from Albers to WGS84
             import pyproj
             transformer = pyproj.Transformer.from_crs(
                 "EPSG:3310", "EPSG:4326", always_xy=True
@@ -319,12 +357,15 @@ class MonteCarloEngine:
                 (self.bounds[1] + self.bounds[3]) / 2,
             )
 
+            # Pure random sampling from fire season (June-October)
+            # sample_extreme=False means no filtering for extreme conditions
+            # The historical frequency of extreme events is preserved
             scenario = sample_weather_scenario(
                 self.gridmet_ds,
                 lat=lat,
                 lon=lon,
-                sample_extreme=extreme,
-                season="santa_ana" if extreme else "fire",
+                sample_extreme=False,  # Pure random, no extreme filtering
+                season="fire",  # Fire season: June-October
             )
 
             return {
@@ -333,12 +374,13 @@ class MonteCarloEngine:
                 "rh_min": scenario.rh_min,
                 "rh_max": scenario.rh_max,
                 "wind_speed": scenario.wind_speed_mph,
-                "wind_direction": scenario.wind_direction,
+                "wind_direction": scenario.wind_direction,  # Actual historical direction
                 "erc": scenario.erc,
-                "is_extreme": scenario.is_extreme,
+                "is_extreme": scenario.is_extreme,  # Determined by actual conditions
             }
         else:
-            # Default weather
+            # DEFAULT MODE: Hardcoded weather (only used when no GridMET data)
+            # Uses artificial extreme/normal split with fixed values
             if extreme:
                 return {
                     "temp_max": 100,
@@ -346,7 +388,7 @@ class MonteCarloEngine:
                     "rh_min": 8,
                     "rh_max": 25,
                     "wind_speed": 35,
-                    "wind_direction": 45,  # NE wind (offshore)
+                    "wind_direction": 45,  # NE wind (offshore) - hardcoded
                     "erc": 95,
                     "is_extreme": True,
                 }
@@ -357,7 +399,7 @@ class MonteCarloEngine:
                     "rh_min": 20,
                     "rh_max": 50,
                     "wind_speed": 10,
-                    "wind_direction": 270,
+                    "wind_direction": 270,  # W wind - hardcoded
                     "erc": 60,
                     "is_extreme": False,
                 }
