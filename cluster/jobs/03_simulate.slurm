@@ -50,6 +50,9 @@ TILE_FIRES="${TILE_DIR}/tile_${TILE_ID}_fires.parquet"
 OUTPUT_DIR="${OUTPUT}/tiles"
 TILE_OUTPUT="${OUTPUT_DIR}/tile_${TILE_ID}_burn_probability.tif"
 
+# GridMET weather data for empirical sampling
+GRIDMET_PATH="${DATA_RAW}/weather/gridmet/gridmet_2010_2024.nc"
+
 # Create output directory
 mkdir -p "${OUTPUT_DIR}"
 
@@ -74,9 +77,21 @@ fi
 echo "Running Monte Carlo simulation..."
 echo "  Landscape: ${TILE_LANDSCAPE}"
 echo "  Fires: ${TILE_FIRES}"
+echo "  GridMET: ${GRIDMET_PATH}"
 echo "  Weather samples: ${WEATHER_SAMPLES}"
 echo "  Simulation hours: ${SIMULATION_HOURS}"
 echo "  Extreme fraction: ${EXTREME_WEATHER_FRACTION}"
+echo ""
+
+# Check if GridMET data exists for empirical weather sampling
+if [[ -f "${GRIDMET_PATH}" ]]; then
+    echo "Using EMPIRICAL weather sampling from historical GridMET data"
+    GRIDMET_ARG="--gridmet ${GRIDMET_PATH}"
+else
+    echo "WARNING: GridMET data not found. Using DEFAULT weather scenarios."
+    echo "         For empirical sampling, run: scripts/download_gridmet.py"
+    GRIDMET_ARG=""
+fi
 echo ""
 
 START_TIME=$(date +%s)
@@ -86,6 +101,7 @@ python scripts/run_tile_simulation.py \
     --landscape "${TILE_LANDSCAPE}" \
     --fires "${TILE_FIRES}" \
     --output "${TILE_OUTPUT}" \
+    ${GRIDMET_ARG} \
     --weather-samples ${WEATHER_SAMPLES} \
     --simulation-hours ${SIMULATION_HOURS} \
     --extreme-fraction ${EXTREME_WEATHER_FRACTION} \

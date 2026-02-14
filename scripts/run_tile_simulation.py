@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import geopandas as gpd
 import rasterio
+import xarray as xr
 from rasterio.transform import rowcol
 
 # Add project root to path
@@ -112,6 +113,7 @@ def run_tile_simulation(
     landscape_path: Path = None,
     fires_path: Path = None,
     output_path: Path = None,
+    gridmet_path: Path = None,
     weather_samples: int = 100,
     simulation_hours: int = 24,
     extreme_fraction: float = 0.15,
@@ -131,6 +133,9 @@ def run_tile_simulation(
         Path to tile fire perimeters (auto-loaded if None)
     output_path : Path, optional
         Path for output burn probability raster
+    gridmet_path : Path, optional
+        Path to GridMET weather data (NetCDF). If provided, samples weather
+        from the empirical historical distribution instead of using defaults.
     weather_samples : int
         Number of weather scenarios per ignition
     simulation_hours : int
@@ -208,6 +213,22 @@ def run_tile_simulation(
                 dst.write(np.zeros((src.height, src.width), dtype='float32'), 1)
         return
 
+    # Load GridMET weather data for empirical sampling
+    gridmet_ds = None
+    if gridmet_path is None:
+        # Try default location
+        default_gridmet = RAW_DATA_DIR / "weather" / "gridmet" / "gridmet_2010_2024.nc"
+        if default_gridmet.exists():
+            gridmet_path = default_gridmet
+
+    if gridmet_path is not None and Path(gridmet_path).exists():
+        logger.info(f"Loading GridMET weather data: {gridmet_path}")
+        gridmet_ds = xr.open_dataset(gridmet_path)
+        logger.info("Weather sampling: EMPIRICAL (from historical GridMET data)")
+    else:
+        logger.warning("GridMET data not found - using default weather scenarios")
+        logger.warning("For empirical weather sampling, provide --gridmet path")
+
     # Initialize Monte Carlo engine
     from src.integration.monte_carlo import MonteCarloEngine, MonteCarloConfig
 
@@ -219,6 +240,7 @@ def run_tile_simulation(
 
     engine = MonteCarloEngine(
         landscape_path=landscape_path,
+        gridmet_ds=gridmet_ds,
         config=config,
     )
 
@@ -281,6 +303,12 @@ def main():
         help="Path for output burn probability raster",
     )
     parser.add_argument(
+        "--gridmet",
+        type=Path,
+        default=None,
+        help="Path to GridMET weather NetCDF for empirical weather sampling",
+    )
+    parser.add_argument(
         "--weather-samples",
         type=int,
         default=100,
@@ -318,6 +346,7 @@ def main():
         landscape_path=args.landscape,
         fires_path=args.fires,
         output_path=args.output,
+        gridmet_path=args.gridmet,
         weather_samples=args.weather_samples,
         simulation_hours=args.simulation_hours,
         extreme_fraction=args.extreme_fraction,
