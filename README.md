@@ -144,62 +144,110 @@ def run_basic_fire_spread(
 
 ```
 For each iteration (N = 1000):
-    1. Sample a random fire season day (May-October weighted)
-    2. Generate weather scenario:
-       - Wind speed from Weibull distribution (scale=5, shape=2)
-       - Wind direction from historical distribution
-         (bimodal: offshore Diablo winds vs. onshore sea breeze)
-       - 15% chance of "extreme" weather (1.5-2x multipliers)
-    3. Compute ignition probability map for this weather
-    4. Sample ignition locations (Poisson process, ~5 ignitions/iteration)
-    5. Simulate fire spread for each ignition (8 hours duration)
-    6. Record which cells burned
+    1. Sample weather scenario from historical distribution (GridMET)
+    2. Compute ignition probability map for this weather
+    3. Sample ignition locations (Poisson process)
+    4. Simulate fire spread for each ignition (8-24 hours duration)
+    5. Record which cells burned
 
 Burn Probability = (# times cell burned across all iterations) / N
 ```
 
-**Weather Scenarios:**
+**Conditional Mode:** For backtesting, we also support conditional Monte Carlo where ignition locations are fixed to actual historical fire locations, and only weather is varied. This gives P(burn | actual ignitions occurred).
 
-| Parameter | Distribution | Extreme Multiplier |
-|-----------|-------------|-------------------|
-| Wind speed | Weibull(5, 2) | 1.5-2.0x |
-| Temperature | Normal(30, 5) | +10-15 C |
-| Humidity | Normal(30, 10) | 0.5-0.7x |
+#### Weather Sampling
 
-**Computational Efficiency:**
-- Parallel execution across 28 CPU cores
-- Each iteration simulates ~5 fires independently
-- 1000 iterations completes in ~10 minutes
+The model supports two weather sampling modes:
+
+**Empirical Mode (recommended):** When GridMET historical data is provided, weather is sampled directly from historical fire season days:
+
+```
+GridMET Historical Data (2010-2024)
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  Fire Season Filter (June-October)  │
+│  ~150 days × 15 years = 2,250 days │
+└─────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  Random Day Selection               │
+│  Each iteration picks one real day  │
+└─────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│  Extract All Weather Variables:     │
+│  • Wind speed (actual m/s)          │
+│  • Wind direction (actual degrees)  │
+│  • Temperature max/min              │
+│  • Relative humidity max/min        │
+│  • Energy Release Component (ERC)   │
+│  • Fuel moisture (100-hr)           │
+└─────────────────────────────────────┘
+```
+
+**Why empirical sampling matters:**
+
+| Aspect | Hardcoded Defaults | Empirical Sampling |
+|--------|-------------------|-------------------|
+| Wind direction | Fixed 270° or 45° | Full 0-360° historical distribution |
+| Variable correlations | Independent draws | Actual correlations preserved |
+| Extreme events | Artificial 15% | Natural frequency (~5-10%) |
+| Santa Ana winds | Hardcoded pattern | Real NE wind + low humidity + high temp |
+
+Real extreme fire weather days have specific joint patterns. For example, Santa Ana events combine:
+- NE wind direction (offshore)
+- High wind speed (>25 mph)
+- Very low humidity (<15%)
+- High temperature
+
+These conditions co-occur on real days but would be unlikely with independent sampling.
+
+**Default Mode (fallback):** When no GridMET data is provided, falls back to hardcoded scenarios:
+
+| Condition | Temp (°F) | RH (%) | Wind (mph) | Direction |
+|-----------|-----------|--------|------------|-----------|
+| Normal (85%) | 90 | 20 | 10 | 270° (W) |
+| Extreme (15%) | 100 | 8 | 35 | 45° (NE) |
 
 **Implementation:** `src/integration/monte_carlo.py`
 
 ```python
-@dataclass
-class MonteCarloConfig:
-    n_iterations: int = 1000
-    n_cores: int = 28
-    extreme_weather_fraction: float = 0.15
-    fire_duration_minutes: int = 480
-    ignitions_per_iteration: int = 5
+def _sample_weather(self, extreme: bool = False) -> Dict:
+    """
+    Sample a weather scenario.
 
-class MonteCarloEngine:
-    def run(self, progress_callback=None) -> MonteCarloResult:
-        """Run Monte Carlo simulation."""
-        burn_counts = np.zeros(self.grid_shape)
-
-        for i in range(self.config.n_iterations):
-            weather = self._sample_weather()
-            ignitions = self._sample_ignitions(weather)
-
-            for ignition in ignitions:
-                burned = self._simulate_spread(ignition, weather)
-                burn_counts += burned
-
-        return MonteCarloResult(
-            burn_counts=burn_counts,
-            n_iterations=self.config.n_iterations
+    With empirical data: pure random from fire season days
+    Without empirical data: hardcoded normal/extreme split
+    """
+    if self.gridmet_ds is not None:
+        # EMPIRICAL MODE: Sample random day from fire season
+        # Extreme events occur at their natural historical frequency
+        scenario = sample_weather_scenario(
+            self.gridmet_ds,
+            lat=lat, lon=lon,
+            sample_extreme=False,  # Pure random, no artificial forcing
+            season="fire",  # June-October
         )
+        return {
+            "wind_speed": scenario.wind_speed_mph,
+            "wind_direction": scenario.wind_direction,  # Actual historical
+            "temp_max": scenario.temp_max_f,
+            "rh_min": scenario.rh_min,
+            "erc": scenario.erc,
+            "is_extreme": scenario.is_extreme,  # Determined by actual conditions
+        }
+    else:
+        # DEFAULT MODE: Hardcoded values (only when no GridMET)
+        ...
 ```
+
+**Computational Efficiency:**
+- Parallel execution across available CPU cores
+- Each iteration simulates fires independently
+- 1000 iterations completes in ~10-15 minutes
 
 ### 4. Calibration
 
@@ -267,8 +315,17 @@ def aggregate_to_parcels(
 | Digital Elevation Model | 30m | USGS 3DEP | nationalmap.gov/3DEP |
 | Fuel Models (FBFM40) | 30m | LANDFIRE 2023 | landfire.gov |
 | Canopy Cover/Height | 30m | LANDFIRE 2023 | landfire.gov |
-| Weather (GridMET) | 4km | Climatology Engine | climatologylab.org/gridmet |
+| Weather (GridMET) | 4km daily | Climatology Lab | climatologylab.org/gridmet |
+| Building Footprints | Polygon | Microsoft | github.com/microsoft/GlobalMLBuildingFootprints |
 | Parcels | Polygon | County Assessor | varies by county |
+
+**GridMET Variables Used:**
+- `tmmx`, `tmmn`: Temperature max/min (K)
+- `rmax`, `rmin`: Relative humidity max/min (%)
+- `vs`: Wind speed (m/s)
+- `th`: Wind direction (degrees from north)
+- `erc`: Energy Release Component
+- `fm100`: 100-hour fuel moisture (%)
 
 ## Ex Ante Requirement
 
@@ -352,8 +409,11 @@ burn_probs/
 ├── scripts/                  # CLI pipelines
 │   ├── download_pilot_data.py
 │   ├── download_sonoma_county.py
+│   ├── download_gridmet.py       # Download GridMET weather data
+│   ├── download_ms_buildings.py  # Download Microsoft Building Footprints
 │   ├── train_ignition_model.py
 │   ├── run_monte_carlo.py
+│   ├── run_tile_simulation.py    # Run single tile (for cluster)
 │   └── validate_results.py
 └── tests/
 ```
@@ -379,7 +439,22 @@ Downloads:
 - USGS 3DEP terrain (270m resolution, Sonoma bounds)
 - LANDFIRE 2023 fuel models (270m resolution, Sonoma bounds)
 
-### 3. Train Ignition Model
+### 3. Download GridMET Weather Data (for empirical sampling)
+
+```bash
+python scripts/download_gridmet.py --region sonoma
+```
+
+Downloads historical weather data (2010-2024) for empirical weather sampling:
+- Temperature (min/max)
+- Relative humidity (min/max)
+- Wind speed and direction
+- Energy Release Component (ERC)
+- Fuel moisture
+
+This enables the Monte Carlo simulation to sample from the actual historical distribution of fire weather conditions rather than using hardcoded defaults.
+
+### 4. Train Ignition Model
 
 ```bash
 python scripts/train_ignition_model.py \
@@ -390,7 +465,7 @@ python scripts/train_ignition_model.py \
 
 Output: `data/output/models/ignition_model_random_forest.joblib`
 
-### 4. Run Monte Carlo Simulation
+### 5. Run Monte Carlo Simulation
 
 ```bash
 python scripts/run_monte_carlo.py \
@@ -398,13 +473,14 @@ python scripts/run_monte_carlo.py \
     --year 2020 \
     --iterations 1000 \
     --cores 28 \
+    --gridmet data/raw/weather/gridmet/gridmet_2010_2024.nc \
     --calibrate \
     --calibration-years 2015-2022
 ```
 
 Output: `data/output/monte_carlo/sonoma/2020/burn_probability.tif`
 
-### 5. Validate Results
+### 6. Validate Results
 
 ```bash
 python scripts/validate_results.py --county Sonoma --year 2020
@@ -418,9 +494,12 @@ Output: `data/output/validation/sonoma/2020/reliability_diagram.png`
 |-----------|---------|-------------|
 | `--iterations` | 1000 | Monte Carlo iterations (more = smoother probability) |
 | `--cores` | 28 | Parallel workers |
-| `--extreme-fraction` | 0.15 | Fraction of extreme weather scenarios |
+| `--gridmet` | None | Path to GridMET NetCDF for empirical weather sampling |
+| `--extreme-fraction` | 0.15 | Fraction of extreme weather (only used when `--gridmet` not provided) |
 | `--calibrate` | False | Apply calibration from historical data |
 | `--calibration-years` | 2015-2022 | Years for calibration |
+
+**Note:** When `--gridmet` is provided, weather is sampled purely from the historical distribution and `--extreme-fraction` is ignored. Extreme events will occur at their natural historical frequency.
 
 ## Output Schema
 
@@ -468,7 +547,7 @@ matplotlib
 ## Limitations
 
 1. **Simplified fire spread:** Uses cellular automaton approximation rather than full physics-based FlamMap/FSim (Windows-only)
-2. **Weather scenarios:** Based on climatological distributions, not dynamical weather models
+2. **Weather scenarios:** Samples from historical GridMET data (resampling past conditions), not dynamical weather models or climate projections
 3. **Human factors:** Limited representation of ignition sources (power lines, roads)
 4. **Temporal resolution:** Annual probability only (not seasonal or daily)
 5. **Suppression:** Does not model fire suppression efforts
